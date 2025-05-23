@@ -28,17 +28,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
   // Initialize auth state
   useEffect(() => {
     const initAuth = async () => {
       try {
+        // Check if we have a token
+        const token = localStorage.getItem('token')
+        if (!token) {
+          setLoading(false)
+          return
+        }
+
         const data = await getCurrentUser()
         if (data.success && data.user) {
           setUser(data.user)
+        } else {
+          // If getCurrentUser fails, clear the token
+          localStorage.removeItem('token')
         }
       } catch (error) {
         console.error('Auth initialization error:', error)
+        // Clear token on error
+        localStorage.removeItem('token')
       } finally {
         setLoading(false)
       }
@@ -46,9 +57,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     initAuth()
   }, [])
-
   const login = async (email: string, password: string) => {
     setError(null)
+    setLoading(true)
     try {
       const data = await loginUser({ email, password })
       if (data.success && data.user) {
@@ -78,15 +89,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(errorMessage)
     }
   }
-
   const logout = async () => {
     try {
       await logoutUser()
+      // Clear token and user state
+      localStorage.removeItem('token')
       setUser(null)
       window.location.href = '/login'
     } catch (error) {
       console.error('Logout error:', error)
       // Force logout even if API call fails
+      localStorage.removeItem('token')
       setUser(null)
       window.location.href = '/login'
     }

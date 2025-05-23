@@ -40,11 +40,17 @@ api.interceptors.request.use(
 // Authentication
 export async function registerUser(userData: { username: string; email: string; password: string }) {
   const response = await api.post('/auth/register', userData);
+  if (response.data.success && response.data.user.token) {
+    localStorage.setItem('token', response.data.user.token);
+  }
   return response.data;
 }
 
 export async function loginUser(credentials: { email: string; password: string }) {
   const response = await api.post('/auth/login', credentials);
+  if (response.data.success && response.data.user.token) {
+    localStorage.setItem('token', response.data.user.token);
+  }
   return response.data;
 }
 
