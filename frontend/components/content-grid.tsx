@@ -6,7 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Badge } from "@/components/ui/badge"
 import { FileText, Code, Database, FileType2, BookOpen, FolderKanban, Calendar } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
-import { fetchContent } from "@/lib/mongodb"
+import { getBlogs, getSnippets, getDatasets } from "@/lib/api"
 
 type ContentItem = {
   _id: string
@@ -51,8 +51,21 @@ export function ContentGrid({
   useEffect(() => {
     async function loadContent() {
       try {
-        // In a real app, this would fetch from MongoDB Data API
-        const data = await fetchContent({ type, featured, limit })
+        let data = []
+        if (type === "blog") {
+          const res = await getBlogs({ limit, featured })
+          data = res.blogs || res.data || []
+        } else if (type === "snippet") {
+          const res = await getSnippets({ limit, featured })
+          data = res.snippets || res.data || []
+        } else if (type === "dataset") {
+          const res = await getDatasets({ limit, featured })
+          data = res.datasets || res.data || []
+        } else if (type === "project") {
+          // If you have a getProjects API, use it here
+          // Example: const res = await getProjects({ limit, featured });
+          // data = res.projects || res.data || [];
+        }
         setContent(data)
       } catch (error) {
         console.error("Error fetching content:", error)
