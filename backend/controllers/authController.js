@@ -2,6 +2,14 @@ const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
 const { validationResult } = require('express-validator');
 
+// Cookie options
+const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+};
+
 // @desc    Register a new user
 // @route   POST /api/auth/register
 // @access  Public
@@ -34,6 +42,13 @@ exports.register = async (req, res) => {
     });
 
     if (user) {
+      // Generate token
+      const token = generateToken(user._id);
+      
+      // Set token in cookie
+      res.cookie('token', token, cookieOptions);
+
+      // Send response
       res.status(201).json({
         success: true,
         user: {
@@ -43,7 +58,7 @@ exports.register = async (req, res) => {
           role: user.role,
           avatar: user.avatar,
           darkMode: user.darkMode,
-          token: generateToken(user._id)
+          token
         }
       });
     } else {
@@ -91,9 +106,20 @@ exports.login = async (req, res) => {
         success: false,
         error: 'Invalid credentials'
       });
-    }
+    }      // Generate token
+      const token = generateToken(user._id);
+      
+      // Set token in cookie with secure options
+      res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        path: '/'
+      });
 
-    res.json({
+      // Send response
+      res.json({
       success: true,
       user: {
         _id: user._id,
@@ -102,7 +128,7 @@ exports.login = async (req, res) => {
         role: user.role,
         avatar: user.avatar,
         darkMode: user.darkMode,
-        token: generateToken(user._id)
+        token
       }
     });
   } catch (error) {
@@ -119,7 +145,13 @@ exports.login = async (req, res) => {
 // @access  Private
 exports.getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
 
     res.json({
       success: true,
@@ -141,47 +173,13 @@ exports.getMe = async (req, res) => {
   }
 };
 
-// @desc    Update user profile
-// @route   PUT /api/auth/profile
+// @desc    Logout user / clear cookie
+// @route   POST /api/auth/logout
 // @access  Private
-exports.updateProfile = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-
-    if (user) {
-      user.username = req.body.username || user.username;
-      user.email = req.body.email || user.email;
-      user.darkMode = req.body.darkMode !== undefined ? req.body.darkMode : user.darkMode;
-      
-      if (req.body.password) {
-        user.password = req.body.password;
-      }
-
-      const updatedUser = await user.save();
-
-      res.json({
-        success: true,
-        user: {
-          _id: updatedUser._id,
-          username: updatedUser.username,
-          email: updatedUser.email,
-          role: updatedUser.role,
-          avatar: updatedUser.avatar,
-          darkMode: updatedUser.darkMode,
-          token: generateToken(updatedUser._id)
-        }
-      });
-    } else {
-      res.status(404).json({
-        success: false,
-        error: 'User not found'
-      });
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      success: false,
-      error: 'Server error'
-    });
-  }
-}; 
+exports.logout = async (req, res) => {
+  res.clearCookie('token');
+  res.json({
+    success: true,
+    message: 'Logged out successfully'
+  });
+};

@@ -1,7 +1,7 @@
 "use client"
 
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react'
-import { loginUser, registerUser, getCurrentUser, updateUserProfile } from './api'
+import { loginUser, registerUser, getCurrentUser, updateUserProfile, logoutUser } from './api'
 
 type User = {
   _id: string
@@ -10,7 +10,6 @@ type User = {
   role: string
   avatar: string
   darkMode: boolean
-  token?: string
 }
 
 type AuthContextType = {
@@ -19,7 +18,7 @@ type AuthContextType = {
   error: string | null
   login: (email: string, password: string) => Promise<void>
   register: (username: string, email: string, password: string) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
   updateProfile: (userData: Partial<User>) => Promise<void>
 }
 
@@ -34,24 +33,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const initAuth = async () => {
       try {
-        const token = localStorage.getItem('token')
-        if (!token) {
-          setLoading(false)
-          return
-        }
-
         const data = await getCurrentUser()
         if (data.success && data.user) {
           setUser(data.user)
-        } else {
-          // Invalid token, clear storage
-          localStorage.removeItem('token')
-          localStorage.removeItem('user')
         }
       } catch (error) {
         console.error('Auth initialization error:', error)
-        localStorage.removeItem('token')
-        localStorage.removeItem('user')
       } finally {
         setLoading(false)
       }
@@ -66,12 +53,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await loginUser({ email, password })
       if (data.success && data.user) {
         setUser(data.user)
-        if (data.user.token) {
-          localStorage.setItem('token', data.user.token)
-          // Store user without token in localStorage
-          const { token, ...userWithoutToken } = data.user
-          localStorage.setItem('user', JSON.stringify(userWithoutToken))
-        }
       } else {
         throw new Error(data.error || 'Login failed')
       }
@@ -88,12 +69,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await registerUser({ username, email, password })
       if (data.success && data.user) {
         setUser(data.user)
-        if (data.user.token) {
-          localStorage.setItem('token', data.user.token)
-          // Store user without token in localStorage
-          const { token, ...userWithoutToken } = data.user
-          localStorage.setItem('user', JSON.stringify(userWithoutToken))
-        }
       } else {
         throw new Error(data.error || 'Registration failed')
       }
@@ -104,11 +79,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const logout = () => {
-    setUser(null)
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    window.location.href = '/login'
+  const logout = async () => {
+    try {
+      await logoutUser()
+      setUser(null)
+      window.location.href = '/login'
+    } catch (error) {
+      console.error('Logout error:', error)
+      // Force logout even if API call fails
+      setUser(null)
+      window.location.href = '/login'
+    }
   }
 
   const updateProfile = async (userData: Partial<User>) => {
@@ -117,7 +98,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await updateUserProfile(userData)
       if (data.success && data.user) {
         setUser(prev => prev ? { ...prev, ...data.user } : data.user)
-        localStorage.setItem('user', JSON.stringify(data.user))
       } else {
         throw new Error(data.error || 'Profile update failed')
       }

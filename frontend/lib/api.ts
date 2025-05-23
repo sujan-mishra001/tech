@@ -18,7 +18,8 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true
+  withCredentials: true, // Important for cookie handling
+  validateStatus: status => status < 500 // Don't reject if status is not 2xx
 });
 
 // Add a request interceptor to include auth token
@@ -43,6 +44,11 @@ export async function registerUser(userData: { username: string; email: string; 
 
 export async function loginUser(credentials: { email: string; password: string }) {
   const response = await api.post('/auth/login', credentials);
+  return response.data;
+}
+
+export async function logoutUser() {
+  const response = await api.post('/auth/logout');
   return response.data;
 }
 

@@ -29,6 +29,9 @@ router.post(
 // Get current user
 router.get('/me', protect, getMe);
 
+// Logout user
+router.post('/logout', logout);
+
 // Update profile
 router.put('/profile', protect, updateProfile);
 
