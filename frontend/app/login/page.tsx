@@ -2,15 +2,21 @@
 
 import { useState, FormEvent, ChangeEvent } from "react"
 import { useRouter } from "next/navigation"
-import { loginUser } from "@/lib/api"
+import { useAuth } from "@/lib/auth-provider"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { toast } from "@/components/ui/use-toast"
 
+type FormData = {
+  email: string
+  password: string
+}
+
 export default function LoginPage() {
   const router = useRouter()
+  const { login } = useAuth()
   const [loading, setLoading] = useState(false)
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     email: "",
     password: ""
   })
@@ -19,28 +25,16 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     try {
-      const res = await loginUser(formData)
-      if (res.success && res.user?.token) {
-        localStorage.setItem("token", res.user.token)
-        localStorage.setItem("user", JSON.stringify(res.user))
-        toast({ 
-          title: "Login successful",
-          description: "Welcome back! Redirecting you to the homepage..." 
-        })
-        await new Promise(resolve => setTimeout(resolve, 1000)) // Small delay for UX
-        router.push("/")
-        router.refresh()
-      } else {
-        toast({ 
-          title: "Login failed", 
-          description: res.error || "Invalid credentials", 
-          variant: "destructive" 
-        })
-      }
+      await login(formData.email, formData.password)
+      toast({ 
+        title: "Login successful",
+        description: "Welcome back! Redirecting you to the homepage..." 
+      })
+      router.push("/")
     } catch (err: any) {
       toast({ 
         title: "Login failed", 
-        description: err.response?.data?.error || "Invalid credentials", 
+        description: err.message || "Invalid credentials", 
         variant: "destructive" 
       })
     } finally {
@@ -49,9 +43,10 @@ export default function LoginPage() {
   }
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [name]: value
     }))
   }
 

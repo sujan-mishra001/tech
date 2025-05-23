@@ -2,13 +2,14 @@
 
 import { useState, FormEvent, ChangeEvent } from "react"
 import { useRouter } from "next/navigation"
-import { registerUser } from "@/lib/api"
+import { useAuth } from "@/lib/auth-provider"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { toast } from "@/components/ui/use-toast"
 
 export default function RegisterPage() {
   const router = useRouter()
+  const { register } = useAuth()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     username: "",
@@ -20,24 +21,12 @@ export default function RegisterPage() {
     e.preventDefault()
     setLoading(true)
     try {
-      const res = await registerUser(formData)
-      if (res.success && res.user?.token) {
-        localStorage.setItem("token", res.user.token)
-        localStorage.setItem("user", JSON.stringify(res.user))
-        toast({ 
-          title: "Registration successful",
-          description: "Welcome! Redirecting you to the homepage..." 
-        })
-        await new Promise(resolve => setTimeout(resolve, 1000)) // Small delay for UX
-        router.push("/")
-        router.refresh()
-      } else {
-        toast({ 
-          title: "Registration failed", 
-          description: res.error || "Could not register", 
-          variant: "destructive" 
-        })
-      }
+      await register(formData.username, formData.email, formData.password)
+      toast({ 
+        title: "Registration successful",
+        description: "Welcome! Redirecting you to the homepage..." 
+      })
+      router.push("/")
     } catch (err: any) {
       toast({ 
         title: "Registration failed", 

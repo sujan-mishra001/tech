@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react'
+import React, { createContext, useState, useContext, useEffect } from 'react'
 import { loginUser, registerUser, getCurrentUser, updateUserProfile } from './api'
 
 type User = {
@@ -25,11 +25,12 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Initialize auth state from localStorage and verify with backend
   useEffect(() => {
     const initAuth = async () => {
       try {
@@ -37,22 +38,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const savedUser = localStorage.getItem('user')
         
         if (token && savedUser) {
-          const data = await getCurrentUser()
-          if (data.success) {
-            setUser({
-              ...JSON.parse(savedUser),
-              ...data.user
-            })
-          } else {
-            // Token invalid, clear storage
-            localStorage.removeItem('token')
-            localStorage.removeItem('user')
+          // Set initial state from localStorage
+          setUser(JSON.parse(savedUser))
+          
+          // Verify token with backend
+          try {
+            const data = await getCurrentUser()
+            if (data.success && data.user) {
+              // Update user data with latest from server
+              const updatedUser = { ...JSON.parse(savedUser), ...data.user }
+              setUser(updatedUser)
+              localStorage.setItem('user', JSON.stringify(updatedUser))
+            } else {
+              // Invalid token or user data
+              logout()
+            }
+          } catch (err) {
+            // Network error or invalid token
+            console.error('Error verifying auth:', err)
+            logout()
           }
         }
-      } catch (error) {
-        console.error('Auth initialization error:', error)
-        localStorage.removeItem('token')
-        localStorage.removeItem('user')
+      } catch (err) {
+        console.error('Error initializing auth:', err)
+        logout()
       } finally {
         setLoading(false)
       }
@@ -61,37 +70,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initAuth()
   }, [])
 
-  const register = async (username: string, email: string, password: string) => {
-    setError(null)
-    try {
-      const data = await registerUser({ username, email, password })
-      if (data.success && data.user) {
-        setUser(data.user)
-        localStorage.setItem('token', data.user.token!)
-        localStorage.setItem('user', JSON.stringify(data.user))
-      } else {
-        setError(data.error || 'Registration failed')
-      }
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Registration failed')
-      throw err
-    }
-  }
-
   const login = async (email: string, password: string) => {
     setError(null)
     try {
       const data = await loginUser({ email, password })
       if (data.success && data.user) {
+        // Save auth state
         setUser(data.user)
         localStorage.setItem('token', data.user.token!)
         localStorage.setItem('user', JSON.stringify(data.user))
       } else {
-        setError(data.error || 'Login failed')
+        throw new Error(data.error || 'Login failed')
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Login failed')
-      throw err
+      const errorMessage = err.response?.data?.error || err.message || 'Login failed'
+      setError(errorMessage)
+      throw new Error(errorMessage)
+    }
+  }
+
+  const register = async (username: string, email: string, password: string) => {
+    setError(null)
+    try {
+      const data = await registerUser({ username, email, password })
+      if (data.success && data.user) {
+        // Save auth state
+        setUser(data.user)
+        localStorage.setItem('token', data.user.token!)
+        localStorage.setItem('user', JSON.stringify(data.user))
+      } else {
+        throw new Error(data.error || 'Registration failed')
+      }
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error || err.message || 'Registration failed'
+      setError(errorMessage)
+      throw new Error(errorMessage)
     }
   }
 
@@ -107,14 +120,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const data = await updateUserProfile(userData)
       if (data.success && data.user) {
-        setUser(prev => prev ? { ...prev, ...data.user } : data.user)
-        localStorage.setItem('user', JSON.stringify(data.user))
+        const updatedUser = { ...user, ...data.user }
+        setUser(updatedUser)
+        localStorage.setItem('user', JSON.stringify(updatedUser))
       } else {
-        setError(data.error || 'Profile update failed')
+        throw new Error(data.error || 'Profile update failed')
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Profile update failed')
-      throw err
+      const errorMessage = err.response?.data?.error || err.message || 'Profile update failed'
+      setError(errorMessage)
+      throw new Error(errorMessage)
     }
   }
 
