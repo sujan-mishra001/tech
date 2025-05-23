@@ -1,7 +1,14 @@
+"use client"
+
 import { Suspense } from "react"
 import { ContentGrid } from "@/components/content-grid"
 import { ContentFilters } from "@/components/content-filters"
 import { Skeleton } from "@/components/ui/skeleton"
+
+// Separate component that uses useSearchParams inside ContentFilters
+function FiltersWithSearch() {
+  return <ContentFilters contentType="blog" />
+}
 
 export default function BlogsPage() {
   return (
@@ -11,7 +18,10 @@ export default function BlogsPage() {
         <p className="text-muted-foreground">Browse and read data science articles and tutorials</p>
       </div>
 
-      <ContentFilters contentType="blog" />
+      {/* Wrap ContentFilters in Suspense */}
+      <Suspense fallback={<div className="h-10 w-full rounded-md bg-muted animate-pulse"></div>}>
+        <FiltersWithSearch />
+      </Suspense>
 
       <div className="mt-6">
         <Suspense fallback={<ContentGridSkeleton />}>

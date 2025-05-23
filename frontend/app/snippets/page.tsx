@@ -1,17 +1,27 @@
+"use client"
+
 import { Suspense } from "react"
 import { ContentGrid } from "@/components/content-grid"
 import { ContentFilters } from "@/components/content-filters"
 import { Skeleton } from "@/components/ui/skeleton"
+
+// Separate component that uses useSearchParams inside ContentFilters
+function FiltersWithSearch() {
+  return <ContentFilters contentType="snippet" />
+}
 
 export default function SnippetsPage() {
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6 flex flex-col gap-2">
         <h1 className="text-3xl font-bold">Code Snippets</h1>
-        <p className="text-muted-foreground">Browse and use data science code snippets</p>
+        <p className="text-muted-foreground">Browse and use helpful data science code snippets</p>
       </div>
 
-      <ContentFilters contentType="snippet" />
+      {/* Wrap ContentFilters in Suspense */}
+      <Suspense fallback={<div className="h-10 w-full rounded-md bg-muted animate-pulse"></div>}>
+        <FiltersWithSearch />
+      </Suspense>
 
       <div className="mt-6">
         <Suspense fallback={<ContentGridSkeleton />}>
