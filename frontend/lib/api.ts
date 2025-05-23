@@ -95,6 +95,11 @@ export async function deleteBlog(id: string) {
   return response.data;
 }
 
+export async function getUserBlogs(userId: string) {
+  const response = await api.get(`/blogs/user/${userId}`);
+  return response.data;
+}
+
 // Snippets
 export async function getSnippets(params: { featured?: boolean; tag?: string; language?: string; limit?: number; page?: number } = {}) {
   const response = await api.get('/snippets', { params });

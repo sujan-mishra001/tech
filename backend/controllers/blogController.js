@@ -188,4 +188,17 @@ exports.deleteBlog = async (req, res) => {
       error: 'Server error'
     });
   }
-}; 
+};
+
+// @desc    Get blogs by user
+// @route   GET /api/blogs/user/:userId
+// @access  Public
+exports.getUserBlogs = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    const blogs = await Blog.find({ author: userId });
+    res.json({ success: true, blogs });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+};

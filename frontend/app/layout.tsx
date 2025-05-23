@@ -39,9 +39,9 @@ export default function RootLayout({
                 <header className="w-full flex justify-end items-center px-6 py-4 border-b bg-background">
                   <div className="flex items-center gap-4">
                     {/* Profile avatar (placeholder) */}
-                    <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center">
+                    <a href="/profile" className="w-9 h-9 rounded-full bg-muted flex items-center justify-center hover:ring-2 ring-primary transition-all cursor-pointer">
                       <UserCircle className="w-7 h-7 text-muted-foreground" />
-                    </div>
+                    </a>
                     {/* Settings button */}
                     <button className="p-2 rounded-full hover:bg-muted transition-colors">
                       <Settings className="w-6 h-6 text-muted-foreground" />

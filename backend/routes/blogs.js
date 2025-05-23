@@ -1,6 +1,6 @@
 const express = require('express');
 const { check } = require('express-validator');
-const { getBlogs, getBlog, createBlog, updateBlog, deleteBlog } = require('../controllers/blogController');
+const { getBlogs, getBlog, createBlog, updateBlog, deleteBlog, getUserBlogs } = require('../controllers/blogController');
 const { protect } = require('../middleware/auth');
 
 const router = express.Router();
@@ -25,4 +25,7 @@ router
   .put(protect, updateBlog)
   .delete(protect, deleteBlog);
 
-module.exports = router; 
+// Get blogs by user
+router.get('/user/:userId', getUserBlogs);
+
+module.exports = router;
