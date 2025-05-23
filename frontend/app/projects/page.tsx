@@ -4,13 +4,21 @@ import { Suspense } from "react"
 import { ContentGrid } from "@/components/content-grid"
 import { ContentFilters } from "@/components/content-filters"
 import { Skeleton } from "@/components/ui/skeleton"
+import { getProjects } from "@/lib/api"
 
 // Separate component that uses useSearchParams inside ContentFilters
 function FiltersWithSearch() {
   return <ContentFilters contentType="project" />
 }
 
-export default function ProjectsPage() {
+export default async function ProjectsPage() {
+  let projects = []
+  try {
+    const data = await getProjects()
+    projects = data?.data || []
+  } catch (e) {
+    projects = []
+  }
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6 flex flex-col gap-2">

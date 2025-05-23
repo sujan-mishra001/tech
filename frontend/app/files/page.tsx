@@ -4,7 +4,7 @@ import { Suspense } from "react"
 import { ContentGrid } from "@/components/content-grid"
 import { ContentFilters } from "@/components/content-filters"
 import { Skeleton } from "@/components/ui/skeleton"
-import { uploadFile } from "@/lib/api"
+import { getFiles } from "@/lib/api"
 
 // Separate component that uses useSearchParams inside ContentFilters
 function FiltersWithSearch() {
@@ -14,7 +14,7 @@ function FiltersWithSearch() {
 export default async function FilesPage() {
   let files = []
   try {
-    const data = await uploadFile()
+    const data = await getFiles()
     files = data?.data || []
   } catch (e) {
     files = []

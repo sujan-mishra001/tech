@@ -156,3 +156,42 @@ export async function uploadFile(formData: FormData, type: string) {
   });
   return response.data;
 }
+
+// Content Statistics
+export async function getContentStats() {
+  const response = await api.get('/stats/content');
+  return response.data;
+}
+
+// Files
+export async function getFiles(params: { featured?: boolean; tag?: string; limit?: number; page?: number } = {}) {
+  const response = await api.get('/files', { params });
+  return response.data;
+}
+
+export async function getFile(id: string) {
+  const response = await api.get(`/files/${id}`);
+  return response.data;
+}
+
+// Books
+export async function getBooks(params: { featured?: boolean; tag?: string; limit?: number; page?: number } = {}) {
+  const response = await api.get('/books', { params });
+  return response.data;
+}
+
+export async function getBook(id: string) {
+  const response = await api.get(`/books/${id}`);
+  return response.data;
+}
+
+// Projects
+export async function getProjects(params: { featured?: boolean; tag?: string; limit?: number; page?: number } = {}) {
+  const response = await api.get('/jupyter', { params });
+  return response.data;
+}
+
+export async function getProject(id: string) {
+  const response = await api.get(`/jupyter/${id}`);
+  return response.data;
+}

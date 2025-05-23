@@ -49,6 +49,7 @@ const fileRoutes = require('./routes/files');
 const jupyterRoutes = require('./routes/jupyter');
 const snippetRoutes = require('./routes/snippets');
 const datasetRoutes = require('./routes/datasets');
+const statsRoutes = require('./routes/stats');
 
 // Use routes
 app.use('/api/auth', authRoutes);
@@ -58,6 +59,7 @@ app.use('/api/files', fileRoutes);
 app.use('/api/jupyter', jupyterRoutes);
 app.use('/api/snippets', snippetRoutes);
 app.use('/api/datasets', datasetRoutes);
+app.use('/api/stats', statsRoutes);
 
 // Root route
 app.get('/', (req, res) => {
