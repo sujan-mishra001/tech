@@ -11,19 +11,28 @@ dotenv.config();
 // Initialize express app
 const app = express();
 
-// Enable pre-flight requests for all routes
-app.options('*', cors());
+const allowedOrigins = ['https://tech-five-ashy.vercel.app', 'http://localhost:3000'];
 
 // CORS configuration
 app.use(cors({
-  origin: true, // Allow all origins temporarily for debugging
+  origin: function(origin, callback) {
+    // Check if the origin is in our allowed list
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, origin);
+    } else {
+      callback(new Error('CORS not allowed'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  exposedHeaders: ['Set-Cookie'],
-  preflightContinue: false,
-  optionsSuccessStatus: 204
+  exposedHeaders: ['Set-Cookie', 'Authorization']
 }));
+
+// Handle preflight requests
+app.options('*', (req, res) => {
+  res.sendStatus(204);
+});
 
 app.use(cookieParser());
 app.use(express.json({ limit: '50mb' }));
