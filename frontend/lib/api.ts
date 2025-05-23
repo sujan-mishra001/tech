@@ -1,9 +1,16 @@
 // API client for connecting to the backend
 import axios from 'axios';
 
-const API_URL = typeof window !== 'undefined' 
-  ? (window as any).__NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
-  : 'http://localhost:5000/api';
+const API_URL =
+  typeof window !== 'undefined'
+    ? (window as any).__NEXT_PUBLIC_API_URL ||
+      (process.env.NODE_ENV === 'production'
+        ? 'https://tech-yb09.onrender.com/api'
+        : 'http://localhost:5000/api')
+    : process.env.NEXT_PUBLIC_API_URL ||
+      (process.env.NODE_ENV === 'production'
+        ? 'https://tech-yb09.onrender.com/api'
+        : 'http://localhost:5000/api');
 
 // Create axios instance
 const api = axios.create({
@@ -129,4 +136,4 @@ export async function uploadFile(formData: FormData, type: string) {
     },
   });
   return response.data;
-} 
+}
