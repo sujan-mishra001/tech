@@ -20,18 +20,26 @@ exports.protect = async (req, res, next) => {
       error: 'Not authorized to access this route'
     });
   }
-
   try {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_for_development');
 
+    if (!decoded || !decoded.id) {
+      console.error('Invalid token structure:', decoded);
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid token structure'
+      });
+    }
+
     // Get user from the token
     const user = await User.findById(decoded.id);
+    console.log('Found user:', user ? 'yes' : 'no', 'for id:', decoded.id);
 
     if (!user) {
       return res.status(401).json({
         success: false,
-        error: 'User no longer exists'
+        error: 'User not found'
       });
     }
 
@@ -39,10 +47,16 @@ exports.protect = async (req, res, next) => {
     req.user = user;
     next();
   } catch (err) {
-    console.error('Auth middleware error:', err);
+    console.error('Auth middleware error:', err.message);
+    if (err.name === 'JsonWebTokenError') {
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid token'
+      });
+    }
     return res.status(401).json({
       success: false,
-      error: 'Not authorized to access this route'
+      error: 'Authentication failed'
     });
   }
 };

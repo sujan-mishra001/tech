@@ -5,10 +5,10 @@ const { validationResult } = require('express-validator');
 // Cookie options
 const cookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production', // Secure in production
-  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  secure: true, // Always use secure cookies
+  sameSite: 'none', // Required for cross-origin
+  path: '/',
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-  path: '/'
 };
 
 // @desc    Register a new user
@@ -33,9 +33,7 @@ exports.register = async (req, res) => {
         success: false,
         error: 'User already exists'
       });
-    }
-
-    // Create user
+    }    // Create user
     const user = await User.create({
       username,
       email,
@@ -48,6 +46,9 @@ exports.register = async (req, res) => {
       
       // Set token in cookie
       res.cookie('token', token, cookieOptions);
+
+      // Set Authorization header
+      res.setHeader('Authorization', `Bearer ${token}`);
 
       // Send response
       res.status(201).json({
@@ -107,16 +108,19 @@ exports.login = async (req, res) => {
         success: false,
         error: 'Invalid credentials'
       });
-    }      // Generate token
-      const token = generateToken(user._id);
-        // Set token in cookie
-      res.cookie('token', token, {
-        ...cookieOptions,
-        path: '/'
-      });
+    }
 
-      // Send response
-      res.json({
+    // Generate token
+    const token = generateToken(user._id);
+      
+    // Set token in cookie
+    res.cookie('token', token, cookieOptions);
+
+    // Set Authorization header
+    res.setHeader('Authorization', `Bearer ${token}`);
+
+    // Send response
+    res.json({
       success: true,
       user: {
         _id: user._id,
@@ -129,7 +133,7 @@ exports.login = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(error);
+    console.error('Login error:', error);
     res.status(500).json({
       success: false,
       error: 'Server error'
@@ -142,8 +146,17 @@ exports.login = async (req, res) => {
 // @access  Private
 exports.getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id);
+    if (!req.user || !req.user._id) {
+      console.error('No user in request:', req.user);
+      return res.status(401).json({
+        success: false,
+        error: 'User not authenticated'
+      });
+    }
+
+    const user = await User.findById(req.user._id).select('-password');
     if (!user) {
+      console.error('User not found for ID:', req.user._id);
       return res.status(404).json({
         success: false,
         error: 'User not found'
@@ -162,10 +175,10 @@ exports.getMe = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(error);
+    console.error('GetMe error:', error);
     res.status(500).json({
       success: false,
-      error: 'Server error'
+      error: 'Internal server error'
     });
   }
 };
@@ -174,12 +187,9 @@ exports.getMe = async (req, res) => {
 // @route   POST /api/auth/logout
 // @access  Public
 exports.logout = (req, res) => {
-  try {
-    res.cookie('token', 'none', {
-      expires: new Date(Date.now() + 5 * 1000), // expires in 5 seconds
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+  try {    res.cookie('token', 'none', {
+      expires: new Date(Date.now()),
+      ...cookieOptions
     });
 
     res.status(200).json({
