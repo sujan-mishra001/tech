@@ -11,19 +11,33 @@ dotenv.config();
 // Initialize express app
 const app = express();
 
-// Middleware
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://tech-five-ashy.vercel.app', 'https://tech-five.vercel.app', 'https://tech-five.onrender.com']
-    : 'http://localhost:3000',
+// CORS configuration
+const corsOptions = {
+  origin: function(origin, callback) {
+    const allowedOrigins = process.env.NODE_ENV === 'production'
+      ? ['https://tech-five-ashy.vercel.app', 'https://tech-yb09.onrender.com']
+      : ['http://localhost:3000'];
+    
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With', 'Origin'],
   exposedHeaders: ['Set-Cookie', 'Authorization']
-}));
+};
 
-// Add OPTIONS handling for preflight requests
-app.options('*', cors());
+// Apply CORS to all routes
+app.use(cors(corsOptions));
+
+// Handle preflight requests
+app.options('*', cors(corsOptions));
 
 app.use(cookieParser());
 app.use(express.json({ limit: '50mb' }));
