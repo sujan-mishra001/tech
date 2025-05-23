@@ -4,13 +4,22 @@ import { Suspense } from "react"
 import { ContentGrid } from "@/components/content-grid"
 import { ContentFilters } from "@/components/content-filters"
 import { Skeleton } from "@/components/ui/skeleton"
+import { uploadFile } from "@/lib/api"
 
 // Separate component that uses useSearchParams inside ContentFilters
 function FiltersWithSearch() {
   return <ContentFilters contentType="file" />
 }
 
-export default function FilesPage() {
+export default async function FilesPage() {
+  let files = []
+  try {
+    const data = await uploadFile()
+    files = data?.data || []
+  } catch (e) {
+    files = []
+  }
+
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6 flex flex-col gap-2">
@@ -24,9 +33,14 @@ export default function FilesPage() {
       </Suspense>
 
       <div className="mt-6">
-        <Suspense fallback={<ContentGridSkeleton />}>
-          <ContentGrid type="file" limit={12} />
-        </Suspense>
+        {/* Render files if available, else show skeleton/empty */}
+        {files.length === 0 ? (
+          <ContentGridSkeleton />
+        ) : (
+          <Suspense fallback={<ContentGridSkeleton />}>
+            <ContentGrid type="file" limit={12} />
+          </Suspense>
+        )}
       </div>
     </div>
   )

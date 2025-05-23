@@ -4,13 +4,22 @@ import { Suspense } from "react"
 import { ContentGrid } from "@/components/content-grid"
 import { ContentFilters } from "@/components/content-filters"
 import { Skeleton } from "@/components/ui/skeleton"
+import { getBlogs } from "@/lib/api"
 
 // Separate component that uses useSearchParams inside ContentFilters
 function FiltersWithSearch() {
   return <ContentFilters contentType="blog" />
 }
 
-export default function BlogsPage() {
+export default async function BlogsPage() {
+  let blogs = []
+  try {
+    const data = await getBlogs()
+    blogs = data?.data || []
+  } catch (e) {
+    blogs = []
+  }
+
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6 flex flex-col gap-2">
@@ -24,9 +33,14 @@ export default function BlogsPage() {
       </Suspense>
 
       <div className="mt-6">
-        <Suspense fallback={<ContentGridSkeleton />}>
-          <ContentGrid type="blog" limit={12} />
-        </Suspense>
+        {/* Render blogs if available, else show skeleton/empty */}
+        {blogs.length === 0 ? (
+          <ContentGridSkeleton />
+        ) : (
+          <Suspense fallback={<ContentGridSkeleton />}>
+            <ContentGrid type="blog" limit={12} />
+          </Suspense>
+        )}
       </div>
     </div>
   )

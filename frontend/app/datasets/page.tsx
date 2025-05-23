@@ -4,13 +4,22 @@ import { Suspense } from "react"
 import { ContentGrid } from "@/components/content-grid"
 import { ContentFilters } from "@/components/content-filters"
 import { Skeleton } from "@/components/ui/skeleton"
+import { getDatasets } from "@/lib/api"
 
 // Separate component that uses useSearchParams inside ContentFilters
 function FiltersWithSearch() {
   return <ContentFilters contentType="dataset" />
 }
 
-export default function DatasetsPage() {
+export default async function DatasetsPage() {
+  let datasets = []
+  try {
+    const data = await getDatasets()
+    datasets = data?.data || []
+  } catch (e) {
+    datasets = []
+  }
+
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6 flex flex-col gap-2">
@@ -24,9 +33,14 @@ export default function DatasetsPage() {
       </Suspense>
 
       <div className="mt-6">
-        <Suspense fallback={<ContentGridSkeleton />}>
-          <ContentGrid type="dataset" limit={12} />
-        </Suspense>
+        {/* Render datasets if available, else show skeleton/empty */}
+        {datasets.length === 0 ? (
+          <ContentGridSkeleton />
+        ) : (
+          <Suspense fallback={<ContentGridSkeleton />}>
+            <ContentGrid type="dataset" limit={12} />
+          </Suspense>
+        )}
       </div>
     </div>
   )

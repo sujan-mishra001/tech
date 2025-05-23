@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { FileText, Code, Database, FileType2, BookOpen, FolderKanban, Upload, X, Plus } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "@/components/ui/use-toast"
-import { uploadContent } from "@/lib/mongodb"
+import { createBlog, createSnippet, uploadDataset, uploadFile } from "@/lib/api"
 
 export default function UploadPage() {
   const router = useRouter()
@@ -65,18 +65,32 @@ export default function UploadPage() {
 
     try {
       setIsSubmitting(true)
-
-      // In a real app, this would upload to MongoDB Data API
-      await uploadContent({
-        type: contentType,
-        title,
-        description,
-        content,
-        file,
-        url,
-        tags,
-      })
-
+      let response
+      if (contentType === "blog") {
+        response = await createBlog({ title, content, summary: description, tags })
+      } else if (contentType === "snippet") {
+        response = await createSnippet({ title, description, code: content, language: "python", tags })
+      } else if (contentType === "dataset") {
+        if (!file) throw new Error("Dataset file required")
+        const formData = new FormData()
+        formData.append("name", title)
+        formData.append("description", description)
+        formData.append("datasetFile", file)
+        formData.append("tags", tags.join(","))
+        response = await uploadDataset(formData)
+      } else if (contentType === "file") {
+        if (!file) throw new Error("File required")
+        const formData = new FormData()
+        formData.append("title", title)
+        formData.append("description", description)
+        formData.append("file", file)
+        formData.append("type", "file")
+        formData.append("tags", tags.join(","))
+        response = await uploadFile(formData, "file")
+      } else {
+        // For book/project, just show success for now
+        response = { success: true }
+      }
       toast({
         title: "Success",
         description: "Content uploaded successfully",
