@@ -5,10 +5,10 @@ const { validationResult } = require('express-validator');
 // Cookie options
 const cookieOptions = {
   httpOnly: true,
-  secure: true, // Always use secure cookies
-  sameSite: 'none', // Required for cross-site cookie setting
+  secure: process.env.NODE_ENV === 'production', // Secure in production
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-  domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined // Allow cookies for subdomains in production
+  path: '/'
 };
 
 // @desc    Register a new user

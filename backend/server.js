@@ -14,13 +14,17 @@ const app = express();
 // Middleware
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://tech-five-ashy.vercel.app', 'https://tech-five.vercel.app']
-    : ['http://localhost:3000'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    ? ['https://tech-five-ashy.vercel.app', 'https://tech-five.vercel.app', 'https://tech-five.onrender.com']
+    : 'http://localhost:3000',
   credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With', 'Origin'],
   exposedHeaders: ['Set-Cookie', 'Authorization']
 }));
+
+// Add OPTIONS handling for preflight requests
+app.options('*', cors());
+
 app.use(cookieParser());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
