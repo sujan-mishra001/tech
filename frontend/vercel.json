@@ -1,0 +1,26 @@
+{
+  "name": "data-science-hub",
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ],
+  "env": {
+    "NEXT_PUBLIC_API_URL": "https://tech-yb09.onrender.com/api",
+    "NEXT_PUBLIC_APP_NAME": "Data Science Hub",
+    "NEXT_PUBLIC_ENABLE_AUTH": "true",
+    "NEXT_PUBLIC_AI_FEATURES_ENABLED": "true"
+  },
+  "github": {
+    "enabled": true,
+    "silent": true
+  }
+} 
