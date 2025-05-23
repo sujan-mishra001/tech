@@ -18,6 +18,8 @@ yarn-error.log*
 
 # env files
 .env*
+# Exception for AI feature environment variables
+!.env.ai-features
 
 # vercel
 .vercel
@@ -25,3 +27,17 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# AI-related files to ignore
+# Ignore AI model cache directories
+.ai-cache/
+.models/
+**/ai-temp/
+**/*.onnx
+**/*.bin
+**/__pycache__/
+
+# Keep AI feature configurations
+!ai-config.json
+!.ai-features/
+!ai-prompts/

@@ -26,3 +26,16 @@ Thumbs.db
 # Upload directory (except the .gitkeep file)
 /uploads/*
 !/uploads/.gitkeep 
+
+# AI-related files to ignore
+# Ignore AI model cache directories
+.ai-cache/
+.models/
+**/ai-temp/
+**/*.onnx
+**/*.bin
+
+# Keep AI feature configurations
+!ai-config.json
+!.ai-features
+!ai-prompts/ 
