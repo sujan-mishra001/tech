@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useState, useContext, useEffect } from 'react'
+import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react'
 import { loginUser, registerUser, getCurrentUser, updateUserProfile } from './api'
 
 type User = {
@@ -25,43 +25,33 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Initialize auth state from localStorage and verify with backend
+  // Initialize auth state
   useEffect(() => {
     const initAuth = async () => {
       try {
         const token = localStorage.getItem('token')
-        const savedUser = localStorage.getItem('user')
-        
-        if (token && savedUser) {
-          // Set initial state from localStorage
-          setUser(JSON.parse(savedUser))
-          
-          // Verify token with backend
-          try {
-            const data = await getCurrentUser()
-            if (data.success && data.user) {
-              // Update user data with latest from server
-              const updatedUser = { ...JSON.parse(savedUser), ...data.user }
-              setUser(updatedUser)
-              localStorage.setItem('user', JSON.stringify(updatedUser))
-            } else {
-              // Invalid token or user data
-              logout()
-            }
-          } catch (err) {
-            // Network error or invalid token
-            console.error('Error verifying auth:', err)
-            logout()
-          }
+        if (!token) {
+          setLoading(false)
+          return
         }
-      } catch (err) {
-        console.error('Error initializing auth:', err)
-        logout()
+
+        const data = await getCurrentUser()
+        if (data.success && data.user) {
+          setUser(data.user)
+        } else {
+          // Invalid token, clear storage
+          localStorage.removeItem('token')
+          localStorage.removeItem('user')
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error)
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
       } finally {
         setLoading(false)
       }
@@ -75,10 +65,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const data = await loginUser({ email, password })
       if (data.success && data.user) {
-        // Save auth state
         setUser(data.user)
-        localStorage.setItem('token', data.user.token!)
-        localStorage.setItem('user', JSON.stringify(data.user))
+        if (data.user.token) {
+          localStorage.setItem('token', data.user.token)
+          // Store user without token in localStorage
+          const { token, ...userWithoutToken } = data.user
+          localStorage.setItem('user', JSON.stringify(userWithoutToken))
+        }
       } else {
         throw new Error(data.error || 'Login failed')
       }
@@ -94,10 +87,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const data = await registerUser({ username, email, password })
       if (data.success && data.user) {
-        // Save auth state
         setUser(data.user)
-        localStorage.setItem('token', data.user.token!)
-        localStorage.setItem('user', JSON.stringify(data.user))
+        if (data.user.token) {
+          localStorage.setItem('token', data.user.token)
+          // Store user without token in localStorage
+          const { token, ...userWithoutToken } = data.user
+          localStorage.setItem('user', JSON.stringify(userWithoutToken))
+        }
       } else {
         throw new Error(data.error || 'Registration failed')
       }
@@ -120,9 +116,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const data = await updateUserProfile(userData)
       if (data.success && data.user) {
-        const updatedUser = { ...user, ...data.user }
-        setUser(updatedUser)
-        localStorage.setItem('user', JSON.stringify(updatedUser))
+        setUser(prev => prev ? { ...prev, ...data.user } : data.user)
+        localStorage.setItem('user', JSON.stringify(data.user))
       } else {
         throw new Error(data.error || 'Profile update failed')
       }
