@@ -4,14 +4,13 @@ const User = require('../models/User');
 // Protect routes
 exports.protect = async (req, res, next) => {
   let token;
-  
-  // Check for token in cookies first
-  if (req.cookies.token) {
-    token = req.cookies.token;
-  }
-  // Then check authorization header as fallback
-  else if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    // Check for token in authorization header first
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     token = req.headers.authorization.split(' ')[1];
+  }
+  // Then check cookies as fallback
+  else if (req.cookies.token) {
+    token = req.cookies.token;
   }
 
   // Make sure token exists

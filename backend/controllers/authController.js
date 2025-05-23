@@ -5,9 +5,10 @@ const { validationResult } = require('express-validator');
 // Cookie options
 const cookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-  maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+  secure: true, // Always use secure cookies
+  sameSite: 'none', // Required for cross-site cookie setting
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined // Allow cookies for subdomains in production
 };
 
 // @desc    Register a new user
@@ -108,13 +109,9 @@ exports.login = async (req, res) => {
       });
     }      // Generate token
       const token = generateToken(user._id);
-      
-      // Set token in cookie with secure options
+        // Set token in cookie
       res.cookie('token', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        ...cookieOptions,
         path: '/'
       });
 

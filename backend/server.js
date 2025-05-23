@@ -14,12 +14,12 @@ const app = express();
 // Middleware
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://tech-five-ashy.vercel.app']
+    ? ['https://tech-five-ashy.vercel.app', 'https://tech-five.vercel.app']
     : ['http://localhost:3000'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['set-cookie']
+  exposedHeaders: ['Set-Cookie', 'Authorization']
 }));
 app.use(cookieParser());
 app.use(express.json({ limit: '50mb' }));

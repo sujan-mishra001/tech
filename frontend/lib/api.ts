@@ -17,9 +17,12 @@ const api = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
   withCredentials: true, // Important for cookie handling
-  validateStatus: status => status < 500 // Don't reject if status is not 2xx
+  validateStatus: status => status < 500, // Don't reject if status is not 2xx
+  xsrfCookieName: 'XSRF-TOKEN',
+  xsrfHeaderName: 'X-XSRF-TOKEN'
 });
 
 // Add a request interceptor to include auth token
