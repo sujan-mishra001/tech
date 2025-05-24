@@ -5,7 +5,7 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { FileText, Code, Database, FileType2, BookOpen, FolderKanban } from "lucide-react"
-import { fetchContentStats } from "@/lib/mongodb"
+import { getContentStats } from "@/lib/api"
 
 type ContentStats = {
   blogs: number
@@ -33,9 +33,12 @@ export function ContentStats() {
   useEffect(() => {
     async function loadStats() {
       try {
-        // In a real app, this would fetch from MongoDB Data API
-        const data = await fetchContentStats()
-        setStats(data)
+        const data = await getContentStats()
+        const statsData = data as Omit<ContentStats, 'total'>
+        setStats({
+          ...statsData,
+          total: Object.values(statsData).reduce((sum, count) => sum + (typeof count === 'number' ? count : 0), 0)
+        })
       } catch (error) {
         console.error("Error fetching stats:", error)
       } finally {
